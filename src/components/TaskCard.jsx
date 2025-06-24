@@ -1,41 +1,38 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import * as FiIcons from 'react-icons/fi';
-import SafeIcon from '../common/SafeIcon';
-import { useTask } from '../context/TaskContext';
-import { format } from 'date-fns';
+import React from 'react'
+import { motion } from 'framer-motion'
+import * as FiIcons from 'react-icons/fi'
+import SafeIcon from '../common/SafeIcon'
+import { useTask } from '../context/TaskContext'
+import { format } from 'date-fns'
 
-const { FiEdit2, FiTrash2, FiCalendar, FiUser, FiFlag } = FiIcons;
+const { FiEdit2, FiTrash2, FiCalendar, FiUser, FiFlag } = FiIcons
 
 function TaskCard({ task, onEdit }) {
-  const { dispatch } = useTask();
+  const { updateTask, deleteTask } = useTask()
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete this task?')) {
-      dispatch({ type: 'DELETE_TASK', payload: task.id });
+      await deleteTask(task.id)
     }
-  };
+  }
 
-  const handleStatusChange = (newStatus) => {
-    dispatch({
-      type: 'UPDATE_TASK',
-      payload: { ...task, status: newStatus }
-    });
-  };
+  const handleStatusChange = async (newStatus) => {
+    await updateTask({ ...task, status: newStatus })
+  }
 
   const statusColors = {
     pending: 'bg-gray-100 text-gray-700',
     'in-progress': 'bg-blue-100 text-blue-700',
     completed: 'bg-green-100 text-green-700'
-  };
+  }
 
   const priorityColors = {
     low: 'text-green-600',
     medium: 'text-yellow-600',
     high: 'text-red-600'
-  };
+  }
 
-  const isOverdue = new Date(task.dueDate) < new Date() && task.status !== 'completed';
+  const isOverdue = new Date(task.due_date) < new Date() && task.status !== 'completed'
 
   return (
     <motion.div
@@ -76,7 +73,7 @@ function TaskCard({ task, onEdit }) {
       <div className="space-y-2 mb-4">
         <div className="flex items-center space-x-2 text-sm text-gray-500">
           <SafeIcon icon={FiCalendar} className="w-4 h-4" />
-          <span>{format(new Date(task.dueDate), 'MMM dd, yyyy')}</span>
+          <span>{format(new Date(task.due_date), 'MMM dd, yyyy')}</span>
           {isOverdue && <span className="text-red-600 font-medium">Overdue</span>}
         </div>
         {task.assignee && (
@@ -91,7 +88,6 @@ function TaskCard({ task, onEdit }) {
         <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[task.status]}`}>
           {task.status.replace('-', ' ').toUpperCase()}
         </span>
-
         <select
           value={task.status}
           onChange={(e) => handleStatusChange(e.target.value)}
@@ -103,7 +99,7 @@ function TaskCard({ task, onEdit }) {
         </select>
       </div>
     </motion.div>
-  );
+  )
 }
 
-export default TaskCard;
+export default TaskCard

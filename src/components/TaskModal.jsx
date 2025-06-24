@@ -1,67 +1,72 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import * as FiIcons from 'react-icons/fi';
-import SafeIcon from '../common/SafeIcon';
-import { useTask } from '../context/TaskContext';
+import React, { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import * as FiIcons from 'react-icons/fi'
+import SafeIcon from '../common/SafeIcon'
+import { useTask } from '../context/TaskContext'
 
-const { FiX } = FiIcons;
+const { FiX } = FiIcons
 
 function TaskModal({ isOpen, onClose, task }) {
-  const { dispatch } = useTask();
+  const { addTask, updateTask } = useTask()
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     priority: 'medium',
     status: 'pending',
-    dueDate: '',
+    due_date: '',
     assignee: '',
     project: ''
-  });
+  })
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (task) {
-      setFormData(task);
+      setFormData({
+        title: task.title || '',
+        description: task.description || '',
+        priority: task.priority || 'medium',
+        status: task.status || 'pending',
+        due_date: task.due_date || '',
+        assignee: task.assignee || '',
+        project: task.project || ''
+      })
     } else {
       setFormData({
         title: '',
         description: '',
         priority: 'medium',
         status: 'pending',
-        dueDate: '',
+        due_date: '',
         assignee: '',
         project: ''
-      });
+      })
     }
-  }, [task, isOpen]);
+  }, [task, isOpen])
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    if (task) {
-      dispatch({
-        type: 'UPDATE_TASK',
-        payload: { ...formData, id: task.id }
-      });
-    } else {
-      dispatch({
-        type: 'ADD_TASK',
-        payload: {
-          ...formData,
-          id: Date.now().toString(),
-          createdAt: new Date().toISOString()
-        }
-      });
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+
+    try {
+      if (task) {
+        await updateTask({ ...formData, id: task.id })
+      } else {
+        await addTask(formData)
+      }
+      onClose()
+    } catch (error) {
+      console.error('Error saving task:', error)
+    } finally {
+      setLoading(false)
     }
-    
-    onClose();
-  };
+  }
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
-    });
-  };
+    })
+  }
 
   return (
     <AnimatePresence>
@@ -74,7 +79,6 @@ function TaskModal({ isOpen, onClose, task }) {
             className="absolute inset-0 bg-black bg-opacity-50"
             onClick={onClose}
           />
-          
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -139,7 +143,6 @@ function TaskModal({ isOpen, onClose, task }) {
                     <option value="high">High</option>
                   </select>
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Status
@@ -163,8 +166,8 @@ function TaskModal({ isOpen, onClose, task }) {
                 </label>
                 <input
                   type="date"
-                  name="dueDate"
-                  value={formData.dueDate}
+                  name="due_date"
+                  value={formData.due_date}
                   onChange={handleChange}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -209,9 +212,10 @@ function TaskModal({ isOpen, onClose, task }) {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200"
+                  disabled={loading}
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 disabled:opacity-50"
                 >
-                  {task ? 'Update Task' : 'Create Task'}
+                  {loading ? 'Saving...' : (task ? 'Update Task' : 'Create Task')}
                 </button>
               </div>
             </form>
@@ -219,7 +223,7 @@ function TaskModal({ isOpen, onClose, task }) {
         </div>
       )}
     </AnimatePresence>
-  );
+  )
 }
 
-export default TaskModal;
+export default TaskModal
